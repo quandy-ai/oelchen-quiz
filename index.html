@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ölchen AI Quiz Game – All-in-One Studio</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="audio.js"></script>
+  <script src="confetti.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">🌿🤖</span>
+        <span>Ölchen AI Quiz Master</span>
+      </div>
+      <div class="header-controls">
+        <button id="btnHomeSound" class="btn-icon" title="Ton umschalten">🔊</button>
+        <button id="btnHomeFullscreen" class="btn-icon" title="Vollbild">⛶ Vollbild</button>
+      </div>
+    </header>
+
+    <!-- Main Navigation / Mode Selector -->
+    <main style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; max-width: 900px; margin: 0 auto; width: 100%;">
+      
+      <div style="animation: popIn 0.4s ease; margin-bottom: 2rem;">
+        <h1 style="font-size: 2.8rem; font-weight: 900; background: linear-gradient(135deg, #a5b4fc, #38bdf8, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.75rem;">
+          Das interaktive Klassen-Quiz
+        </h1>
+        <p style="font-size: 1.2rem; color: #94a3b8; max-width: 650px; margin: 0 auto; line-height: 1.5;">
+          Perfekt für deinen Vortrag über <b>Websites mit KI</b> & <b>Ölchen AI</b>. Alle Mitschüler spielen live von ihren iPads oder Smartphones mit!
+        </p>
+      </div>
+
+      <!-- Action Cards Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; width: 100%; margin-bottom: 2.5rem;">
+        
+        <!-- 1. Whiteboard / Beamer Host -->
+        <a href="/host.html" class="mode-card card-host">
+          <div class="mode-icon">📺</div>
+          <div class="mode-title">Whiteboard / Beamer</div>
+          <div class="mode-desc">Starte das Spiel auf der Leinwand. Zeigt den QR-Code, Timer, Fragen, Rangliste und das Siegerpodest!</div>
+          <div class="mode-badge">Als Moderator starten ➔</div>
+        </a>
+
+        <!-- 2. iPad / Smartphone Player -->
+        <a href="/play.html" class="mode-card card-player">
+          <div class="mode-icon">📱</div>
+          <div class="mode-title">iPad / Smartphone</div>
+          <div class="mode-desc">Für Mitschüler: PIN eingeben oder QR-Code scannen, Avatar wählen und mit den 4 bunten Buttons buzzern!</div>
+          <div class="mode-badge">Als Schüler mitspielen ➔</div>
+        </a>
+
+        <!-- 3. Quiz Studio & Editor -->
+        <a href="/host.html#editor" class="mode-card card-editor" onclick="localStorage.setItem('openEditorOnLoad', 'true')">
+          <div class="mode-icon">✏️</div>
+          <div class="mode-title">Quiz-Studio / Editor</div>
+          <div class="mode-desc">Eigene Fragen erstellen, Antwortoptionen anpassen, Zeiten einstellen oder neue Quiz-Packs laden.</div>
+          <div class="mode-badge">Fragen bearbeiten ➔</div>
+        </a>
+
+      </div>
+
+      <!-- Live Features Banner -->
+      <div style="background: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 1.5rem 2rem; width: 100%; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+        <h3 style="font-size: 1.2rem; color: #fff; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>⚡</span> Wie der Ablauf in der Klasse funktioniert:
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; color: #94a3b8; font-size: 0.95rem;">
+          <div><b>1. Auf Beamer öffnen:</b> Starte die Host-Ansicht auf dem Whiteboard.</div>
+          <div><b>2. iPads scannen:</b> Schüler scannen den QR-Code oder tippen den 4-stelligen PIN ein.</div>
+          <div><b>3. Live buzzern:</b> Fragen beantworten, Punkte & Streaks sammeln und Sieger feiern!</div>
+        </div>
+      </div>
+
+    </main>
+
+    <footer style="text-align: center; color: #64748b; font-size: 0.85rem; padding: 1rem 0;">
+      Ölchen AI Quiz Game • Erstellt für deinen KI-Website-Vortrag & <a href="https://oelchen.lovable.app" target="_blank" style="color: #38bdf8; text-decoration: none;">oelchen.lovable.app</a>
+    </footer>
+
+  </div>
+
+  <script>
+    let soundMuted = false;
+    document.getElementById('btnHomeSound').addEventListener('click', () => {
+      soundMuted = !soundMuted;
+      window.soundFx.muted = soundMuted;
+      document.getElementById('btnHomeSound').textContent = soundMuted ? '🔇' : '🔊';
+    });
+
+    document.getElementById('btnHomeFullscreen').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whiteboard Master – Ölchen AI Quiz</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="audio.js"></script>
+  <script src="confetti.js"></script>
+  <script src="network.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Floating Reactions Layer -->
+    <div id="floatingReactions" class="floating-reactions-container"></div>
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">🌿🤖</span>
+        <span>Ölchen AI Quiz Master</span>
+      </div>
+      <div class="header-controls">
+        <button id="btnSoundToggle" class="btn-icon" title="Ton ein/aus">🔊</button>
+        <button id="btnFullscreen" class="btn-icon" title="Vollbild">⛶ Vollbild</button>
+        <button id="btnManageQuestions" class="btn btn-secondary" style="font-size: 0.95rem; padding: 0.55rem 1.1rem;">⚙️ Fragen anpassen</button>
+      </div>
+    </header>
+
+    <!-- 1. LOBBY SCREEN -->
+    <div id="screenLobby" class="screen active">
+      <div class="lobby-grid">
+        <!-- Left: PIN & QR Code -->
+        <div class="lobby-info-card">
+          <p style="font-size: 1.25rem; color: #a5b4fc; font-weight: 800;">Mit iPad oder Smartphone mitspielen:</p>
+          <div class="pin-display">
+            <div class="pin-label">Spiel-PIN:</div>
+            <div id="displayPin" class="pin-number">----</div>
+          </div>
+          
+          <div id="qrCodeContainer" class="qr-wrapper"></div>
+          
+          <div class="lobby-url-hint">
+            🔗 Scanne den <b>QR-Code</b> oder öffne <span id="displayHostUrl" style="color: #fff; text-decoration: underline;"></span>!
+          </div>
+        </div>
+
+        <!-- Right: Joined Players Roster -->
+        <div class="roster-card">
+          <div class="roster-header">
+            <h2 style="font-size: 1.6rem; font-weight: 800;">Mitspieler</h2>
+            <div class="player-count-badge"><span id="playerCount">0</span> Spieler</div>
+          </div>
+
+          <div id="playerList" class="player-list">
+            <div id="lobbyEmptyHint" style="color: #64748b; font-style: italic; width: 100%; text-align: center; margin-top: 4rem; font-size: 1.1rem;">
+              Warte auf Schüler... Scanne den QR-Code mit dem iPad oder gib den PIN ein!
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; text-align: center;">
+            <button id="btnStartGame" class="btn btn-large" style="width: 100%;" disabled>
+              🚀 Spiel starten (<span id="btnStartPlayerCount">0</span>)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. QUESTION ACTIVE SCREEN -->
+    <div id="screenQuestion" class="screen">
+      <div class="host-question-container">
+        <!-- Top bar with category & timer -->
+        <div class="host-top-bar">
+          <div class="question-meta">
+            <span id="questionCategory" class="category-tag">KI & Web</span>
+            <span id="doublePointsBadge" class="double-points-badge" style="display: none;">🔥 2X PUNKTE!</span>
+            <span id="questionProgress" class="progress-tag">Frage 1 von 10</span>
+          </div>
+          <div id="questionTimer" class="timer-badge">20</div>
+        </div>
+
+        <!-- Question Box -->
+        <div class="question-box">
+          <div id="questionText" class="question-text">Lädt Frage...</div>
+        </div>
+
+        <!-- 4 Options Cards -->
+        <div class="options-grid">
+          <div id="optCard0" class="option-card option-0">
+            <div class="option-symbol">▲</div>
+            <div id="optText0" class="option-text">Option 1</div>
+            <div id="optStatCount0" class="option-stat-count" style="display: none;">0</div>
+            <div id="optStatBar0" class="option-stat-bar" style="width: 0%;"></div>
+          </div>
+
+          <div id="optCard1" class="option-card option-1">
+            <div class="option-symbol">◆</div>
+            <div id="optText1" class="option-text">Option 2</div>
+            <div id="optStatCount1" class="option-stat-count" style="display: none;">0</div>
+            <div id="optStatBar1" class="option-stat-bar" style="width: 0%;"></div>
+          </div>
+
+          <div id="optCard2" class="option-card option-2">
+            <div class="option-symbol">●</div>
+            <div id="optText2" class="option-text">Option 3</div>
+            <div id="optStatCount2" class="option-stat-count" style="display: none;">0</div>
+            <div id="optStatBar2" class="option-stat-bar" style="width: 0%;"></div>
+          </div>
+
+          <div id="optCard3" class="option-card option-3">
+            <div class="option-symbol">■</div>
+            <div id="optText3" class="option-text">Option 4</div>
+            <div id="optStatCount3" class="option-stat-count" style="display: none;">0</div>
+            <div id="optStatBar3" class="option-stat-bar" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Explanation Pill (after reveal) -->
+        <div id="explanationBanner" class="explanation-banner" style="display: none;"></div>
+
+        <!-- Bottom Bar -->
+        <div class="host-bottom-bar">
+          <div class="answer-counter">
+            Antworten: <span id="liveAnswersCount" style="color: #38bdf8; font-weight: 800;">0</span> / <span id="totalExpectedAnswers">0</span>
+          </div>
+          <button id="btnNextStep" class="btn btn-large" style="display: none;">
+            Weiter zur Rangliste ➔
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. LEADERBOARD SCREEN -->
+    <div id="screenLeaderboard" class="screen">
+      <div class="leaderboard-container">
+        <h2 class="leaderboard-title">🏆 Zwischenstand</h2>
+        <div id="leaderboardList" style="display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 2rem;"></div>
+        <div style="text-align: center;">
+          <button id="btnLeaderboardNext" class="btn btn-large">
+            Nächste Frage ➔
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. CINEMATIC PODIUM SCREEN -->
+    <div id="screenPodium" class="screen">
+      <div class="podium-stage-wrap">
+        <h1 style="font-size: 3rem; font-weight: 900; background: linear-gradient(135deg, #f59e0b, #ec4899, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          👑 Das grosse Siegerpodest!
+        </h1>
+        <p id="podiumStatusText" style="font-size: 1.3rem; color: #94a3b8; font-weight: 700; margin-top: 0.3rem;">
+          Wer hat die meisten Punkte geholt?
+        </p>
+
+        <div class="podium-container">
+          <!-- 2nd Place -->
+          <div id="podiumPlace2" class="podium-place podium-2" style="order: 1;">
+            <div class="podium-avatar" id="podium2Avatar">🥈</div>
+            <div class="podium-name" id="podium2Name">Spieler 2</div>
+            <div class="podium-score" id="podium2Score">0 Pkt</div>
+            <div class="podium-pillar">2</div>
+          </div>
+
+          <!-- 1st Place (Champion) -->
+          <div id="podiumPlace1" class="podium-place podium-1" style="order: 2;">
+            <div class="podium-crown" id="podium1Crown" style="display: none;">👑</div>
+            <div class="podium-avatar" id="podium1Avatar">🥇</div>
+            <div class="podium-name" id="podium1Name">Champion</div>
+            <div class="podium-score" id="podium1Score">0 Pkt</div>
+            <div class="podium-pillar">1</div>
+          </div>
+
+          <!-- 3rd Place -->
+          <div id="podiumPlace3" class="podium-place podium-3" style="order: 3;">
+            <div class="podium-avatar" id="podium3Avatar">🥉</div>
+            <div class="podium-name" id="podium3Name">Spieler 3</div>
+            <div class="podium-score" id="podium3Score">0 Pkt</div>
+            <div class="podium-pillar">3</div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 1.25rem; margin-top: 1.5rem;">
+          <button id="btnPodiumNext" class="btn btn-large" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            ▶ Platz 3 enthüllen!
+          </button>
+          <button id="btnConfettiAgain" class="btn btn-secondary" style="display: none;">🎊 Konfetti-Feuerwerk!</button>
+          <a href="/host.html" class="btn btn-secondary" id="btnRestartGame" style="display: none;">🔄 Neues Spiel</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Question Editor Modal -->
+  <div id="modalQuestions" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 style="font-size: 1.5rem; font-weight: 800;">⚙️ Quiz-Fragen Studio</h2>
+        <button id="btnCloseModal" class="btn-icon">✕</button>
+      </div>
+      <div class="modal-body" id="questionsEditorList"></div>
+      <div style="display: flex; justify-content: space-between; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+        <button id="btnAddQuestion" class="btn btn-secondary">➕ Neue Frage</button>
+        <button id="btnSaveQuestions" class="btn">💾 Speichern & Anwenden</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const net = new QuizNetwork(true);
+    net.init();
+
+    let currentPin = null;
+    let questionsData = [];
+    let isMuted = false;
+    let totalPlayersCount = 0;
+    let cachedPodium = [];
+    let cachedAllPlayers = [];
+    let currentPodiumStep = 0;
+
+    const screens = {
+      lobby: document.getElementById('screenLobby'),
+      question: document.getElementById('screenQuestion'),
+      leaderboard: document.getElementById('screenLeaderboard'),
+      podium: document.getElementById('screenPodium')
+    };
+
+    function showScreen(name) {
+      Object.values(screens).forEach(s => s.classList.remove('active'));
+      if (screens[name]) screens[name].classList.add('active');
+    }
+
+    document.getElementById('btnSoundToggle').addEventListener('click', () => {
+      isMuted = !isMuted;
+      window.soundFx.muted = isMuted;
+      document.getElementById('btnSoundToggle').textContent = isMuted ? '🔇' : '🔊';
+    });
+
+    document.getElementById('btnFullscreen').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    async function init() {
+      try {
+        const res = await fetch('/api/questions');
+        questionsData = await res.json();
+      } catch (e) {
+        questionsData = [
+          { id: 1, category: "🤖 KI & Web", question: "Was macht ein KI-Website-Builder wie Lovable?", options: ["Druckt Papier", "Generiert HTML/CSS/JS aus Prompts", "Ersetzt Internet", "Schaltet PC aus"], correct: 1, time: 20 },
+          { id: 2, category: "💻 Coding Basics", question: "Welche 3 Bausteine bilden jede Website?", options: ["HTML, CSS, JS", "Word, Excel, PPT", "USB, HDMI, Bluetooth", "TikTok, Insta, YT"], correct: 0, time: 20 },
+          { id: 3, category: "🌿 Ölchen AI", question: "Worum geht es bei Ölchen AI (oelchen.lovable.app)?", options: ["Motoröl", "Ätherische Öle & Destillation", "Olivenöl", "Pommesfett"], correct: 1, time: 20 }
+        ];
+      }
+      net.createRoom(questionsData);
+    }
+    init();
+
+    net.on('host:room_created', ({ pin }) => {
+      currentPin = pin;
+      document.getElementById('displayPin').textContent = pin;
+      
+      const playUrl = `${window.location.origin}/play.html?pin=${pin}`;
+      document.getElementById('displayHostUrl').textContent = `${window.location.host}/play.html`;
+
+      const qrContainer = document.getElementById('qrCodeContainer');
+      qrContainer.innerHTML = '';
+      if (window.QRCode) {
+        new QRCode(qrContainer, {
+          text: playUrl,
+          width: 170,
+          height: 170,
+          colorDark: "#070a12",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+    });
+
+    net.on('room:live_reaction', ({ emoji, senderName }) => {
+      const container = document.getElementById('floatingReactions');
+      const bubble = document.createElement('div');
+      bubble.className = 'reaction-bubble';
+      bubble.style.left = `${Math.random() * 120}px`;
+      bubble.innerHTML = `<span>${emoji}</span><span class="sender">${senderName ? senderName.slice(0, 8) : ''}</span>`;
+      container.appendChild(bubble);
+
+      setTimeout(() => {
+        if (bubble.parentNode) bubble.parentNode.removeChild(bubble);
+      }, 3000);
+    });
+
+    net.on('room:players_update', ({ players, count }) => {
+      totalPlayersCount = count;
+      document.getElementById('playerCount').textContent = count;
+      document.getElementById('btnStartPlayerCount').textContent = count;
+      document.getElementById('btnStartGame').disabled = count === 0;
+
+      const playerList = document.getElementById('playerList');
+      if (count === 0) {
+        playerList.innerHTML = '<div id="lobbyEmptyHint" style="color: #64748b; font-style: italic; width: 100%; text-align: center; margin-top: 4rem; font-size: 1.1rem;">Warte auf Schüler... Scanne den QR-Code mit dem iPad oder gib den PIN ein!</div>';
+      } else {
+        playerList.innerHTML = '';
+        players.forEach(p => {
+          const pill = document.createElement('div');
+          pill.className = 'player-pill';
+          pill.innerHTML = `<span class="emoji">${p.avatar}</span><span>${escapeHtml(p.nickname)}</span>`;
+          playerList.appendChild(pill);
+        });
+        window.soundFx.playPop();
+      }
+    });
+
+    document.getElementById('btnStartGame').addEventListener('click', () => {
+      window.soundFx.playWhoosh();
+      net.startGame();
+    });
+
+    net.on('game:question_host', (data) => {
+      showScreen('question');
+      window.soundFx.playWhoosh();
+
+      document.getElementById('questionCategory').textContent = data.category || 'KI & Web';
+      document.getElementById('questionProgress').textContent = `Frage ${data.questionIndex + 1} von ${data.totalQuestions}`;
+      document.getElementById('questionText').textContent = data.question;
+
+      const doubleBadge = document.getElementById('doublePointsBadge');
+      if (data.isDoublePoints) {
+        doubleBadge.style.display = 'inline-flex';
+      } else {
+        doubleBadge.style.display = 'none';
+      }
+
+      for (let i = 0; i < 4; i++) {
+        const card = document.getElementById(`optCard${i}`);
+        const text = document.getElementById(`optText${i}`);
+        const statCount = document.getElementById(`optStatCount${i}`);
+        const statBar = document.getElementById(`optStatBar${i}`);
+
+        card.className = `option-card option-${i}`;
+        text.textContent = data.options[i] || '';
+        statCount.style.display = 'none';
+        statBar.style.width = '0%';
+      }
+
+      document.getElementById('explanationBanner').style.display = 'none';
+      document.getElementById('btnNextStep').style.display = 'none';
+      document.getElementById('liveAnswersCount').textContent = '0';
+      document.getElementById('totalExpectedAnswers').textContent = totalPlayersCount;
+
+      const timerElem = document.getElementById('questionTimer');
+      timerElem.textContent = data.time;
+      timerElem.classList.remove('urgent');
+    });
+
+    net.on('game:timer_tick', ({ timeLeft }) => {
+      const timerElem = document.getElementById('questionTimer');
+      timerElem.textContent = timeLeft;
+      if (timeLeft <= 5) {
+        timerElem.classList.add('urgent');
+        window.soundFx.playUrgentTick();
+      } else {
+        window.soundFx.playTick();
+      }
+    });
+
+    net.on('host:answer_received', ({ answeredCount, totalPlayers }) => {
+      document.getElementById('liveAnswersCount').textContent = answeredCount;
+      document.getElementById('totalExpectedAnswers').textContent = totalPlayers;
+      window.soundFx.playPop();
+    });
+
+    net.on('game:question_result_host', ({ correctIndex, explanation, stats, answeredCount }) => {
+      for (let i = 0; i < 4; i++) {
+        const card = document.getElementById(`optCard${i}`);
+        const statCount = document.getElementById(`optStatCount${i}`);
+        const statBar = document.getElementById(`optStatBar${i}`);
+
+        statCount.textContent = `${stats[i] || 0}`;
+        statCount.style.display = 'block';
+        const percent = Math.round(((stats[i] || 0) / (answeredCount || 1)) * 100);
+        statBar.style.width = `${percent}%`;
+
+        if (i === correctIndex) {
+          card.classList.add('correct-highlight');
+        } else {
+          card.classList.add('dimmed');
+        }
+      }
+
+      if (explanation) {
+        const expElem = document.getElementById('explanationBanner');
+        expElem.textContent = explanation;
+        expElem.style.display = 'block';
+      }
+
+      window.soundFx.playCorrect();
+      document.getElementById('btnNextStep').style.display = 'inline-flex';
+    });
+
+    document.getElementById('btnNextStep').addEventListener('click', () => {
+      window.soundFx.playWhoosh();
+      net.nextStep();
+    });
+
+    net.on('game:leaderboard', ({ leaderboard, isLastQuestion, questionIndex, totalQuestions }) => {
+      showScreen('leaderboard');
+      const listContainer = document.getElementById('leaderboardList');
+      listContainer.innerHTML = '';
+
+      const top5 = leaderboard.slice(0, 5);
+      top5.forEach((p, idx) => {
+        const item = document.createElement('div');
+        item.className = `leaderboard-item rank-${idx + 1}`;
+        item.innerHTML = `
+          <div class="leaderboard-rank">${idx + 1}</div>
+          <div class="leaderboard-name">
+            <span>${p.avatar}</span>
+            <span>${escapeHtml(p.nickname)}</span>
+            ${p.streak > 1 ? `<span class="streak-badge">🔥 ${p.streak}x</span>` : ''}
+          </div>
+          <div class="leaderboard-score">${p.score.toLocaleString()} Pkt</div>
+        `;
+        listContainer.appendChild(item);
+      });
+
+      const nextBtn = document.getElementById('btnLeaderboardNext');
+      if (isLastQuestion) {
+        nextBtn.textContent = '👑 Zum grossen Finale!';
+      } else {
+        nextBtn.textContent = `Frage ${questionIndex + 1} von ${totalQuestions} ➔`;
+      }
+    });
+
+    document.getElementById('btnLeaderboardNext').addEventListener('click', () => {
+      window.soundFx.playWhoosh();
+      net.nextStep();
+    });
+
+    // Podium
+    net.on('game:podium_start', ({ podium, allPlayers }) => {
+      showScreen('podium');
+      cachedPodium = podium;
+      cachedAllPlayers = allPlayers;
+      currentPodiumStep = 0;
+
+      ['podiumPlace1', 'podiumPlace2', 'podiumPlace3'].forEach(id => {
+        document.getElementById(id).classList.remove('revealed');
+      });
+      document.getElementById('podium1Crown').style.display = 'none';
+      document.getElementById('btnConfettiAgain').style.display = 'none';
+      document.getElementById('btnRestartGame').style.display = 'none';
+
+      document.getElementById('podiumStatusText').textContent = 'Spannung steigt... Wer steht auf dem Treppchen?';
+      const btn = document.getElementById('btnPodiumNext');
+      btn.style.display = 'inline-flex';
+      btn.textContent = '🥉 Platz 3 enthüllen!';
+
+      window.soundFx.playDrumroll(2.5);
+    });
+
+    document.getElementById('btnPodiumNext').addEventListener('click', () => {
+      currentPodiumStep++;
+      advancePodium(currentPodiumStep);
+    });
+
+    function advancePodium(step) {
+      const p1 = cachedPodium[0];
+      const p2 = cachedPodium[1];
+      const p3 = cachedPodium[2];
+      const btn = document.getElementById('btnPodiumNext');
+
+      if (step === 1) {
+        if (p3) {
+          document.getElementById('podium3Avatar').textContent = p3.avatar;
+          document.getElementById('podium3Name').textContent = p3.nickname;
+          document.getElementById('podium3Score').textContent = `${p3.score.toLocaleString()} Pkt`;
+          document.getElementById('podiumPlace3').classList.add('revealed');
+        }
+        document.getElementById('podiumStatusText').textContent = `🥉 3. Platz: ${p3 ? p3.nickname : '-'}!`;
+        window.soundFx.playCorrect();
+        btn.textContent = '🥈 Platz 2 enthüllen!';
+      } else if (step === 2) {
+        if (p2) {
+          document.getElementById('podium2Avatar').textContent = p2.avatar;
+          document.getElementById('podium2Name').textContent = p2.nickname;
+          document.getElementById('podium2Score').textContent = `${p2.score.toLocaleString()} Pkt`;
+          document.getElementById('podiumPlace2').classList.add('revealed');
+        }
+        document.getElementById('podiumStatusText').textContent = `🥈 2. Platz: ${p2 ? p2.nickname : '-'}!`;
+        window.soundFx.playCorrect();
+        window.soundFx.playDrumroll(3.0);
+        btn.textContent = '👑 DEN CHAMPION ENTHÜLLEN!';
+      } else if (step === 3) {
+        if (p1) {
+          document.getElementById('podium1Avatar').textContent = p1.avatar;
+          document.getElementById('podium1Name').textContent = p1.nickname;
+          document.getElementById('podium1Score').textContent = `${p1.score.toLocaleString()} Pkt`;
+          document.getElementById('podiumPlace1').classList.add('revealed');
+          document.getElementById('podium1Crown').style.display = 'block';
+        }
+        document.getElementById('podiumStatusText').textContent = `🏆 Herzlichen Glückwunsch an Champion ${p1 ? p1.nickname : ''}!`;
+        
+        window.soundFx.playFanfare();
+        window.launchConfetti();
+
+        btn.style.display = 'none';
+        document.getElementById('btnConfettiAgain').style.display = 'inline-flex';
+        document.getElementById('btnRestartGame').style.display = 'inline-flex';
+
+        net.podiumNext();
+      }
+    }
+
+    document.getElementById('btnConfettiAgain').addEventListener('click', () => {
+      window.launchConfetti();
+      window.soundFx.playPop();
+    });
+
+    // Editor Modal
+    const modal = document.getElementById('modalQuestions');
+    document.getElementById('btnManageQuestions').addEventListener('click', () => {
+      renderQuestionsEditor();
+      modal.classList.add('active');
+    });
+
+    document.getElementById('btnCloseModal').addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+
+    function renderQuestionsEditor() {
+      const container = document.getElementById('questionsEditorList');
+      container.innerHTML = '';
+
+      questionsData.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = 'q-editor-item';
+        item.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <b>Frage ${idx + 1} (${escapeHtml(q.category || '')})</b>
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+              <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 0.3rem; color: #f59e0b; cursor: pointer;">
+                <input type="checkbox" ${q.isDoublePoints ? 'checked' : ''} onchange="toggleQDouble(${idx}, this.checked)"> 🔥 2X Punkte
+              </label>
+              <button onclick="deleteQuestion(${idx})" style="background: none; border: none; color: #ef4444; cursor: pointer; font-weight: bold;">✕ Löschen</button>
+            </div>
+          </div>
+          <input type="text" class="form-input" style="font-size: 1rem; padding: 0.6rem; text-align: left; margin-bottom: 0.6rem;" value="${escapeHtml(q.question)}" onchange="updateQQuestion(${idx}, this.value)" placeholder="Fragetext">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            ${q.options.map((opt, optIdx) => `
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <input type="radio" name="correct_${idx}" ${q.correct === optIdx ? 'checked' : ''} onchange="updateQCorrect(${idx}, ${optIdx})" title="Als richtige Antwort markieren">
+                <input type="text" class="form-input" style="font-size: 0.95rem; padding: 0.5rem; text-align: left;" value="${escapeHtml(opt)}" onchange="updateQOption(${idx}, ${optIdx}, this.value)">
+              </div>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    window.deleteQuestion = (idx) => { questionsData.splice(idx, 1); renderQuestionsEditor(); };
+    window.updateQQuestion = (idx, val) => { questionsData[idx].question = val; };
+    window.updateQOption = (idx, optIdx, val) => { questionsData[idx].options[optIdx] = val; };
+    window.updateQCorrect = (idx, optIdx) => { questionsData[idx].correct = optIdx; };
+    window.toggleQDouble = (idx, checked) => { questionsData[idx].isDoublePoints = checked; };
+
+    document.getElementById('btnAddQuestion').addEventListener('click', () => {
+      questionsData.push({
+        id: Date.now(),
+        category: "🤖 Neues Thema",
+        question: "Neue Frage eingeben...",
+        options: ["Antwort A", "Antwort B", "Antwort C", "Antwort D"],
+        correct: 0,
+        time: 20,
+        isDoublePoints: false,
+        explanation: "Erklärung..."
+      });
+      renderQuestionsEditor();
+    });
+
+    document.getElementById('btnSaveQuestions').addEventListener('click', async () => {
+      try {
+        await fetch('/api/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(questionsData)
+        });
+        alert('Fragen gespeichert!');
+        window.location.reload();
+      } catch (err) {
+        alert('Fragen lokal aktualisiert!');
+        window.location.reload();
+      }
+    });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>

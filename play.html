@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mitspielen – Ölchen AI Quiz</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📱</text></svg>">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="audio.js"></script>
+  <script src="confetti.js"></script>
+  <script src="network.js"></script>
+</head>
+<body>
+  <div class="app-container" style="padding: 0.8rem;">
+    
+    <div class="player-wrap">
+      
+      <!-- 1. JOIN / LOGIN SCREEN -->
+      <div id="pScreenJoin" class="screen active">
+        <div class="player-login-card">
+          <div style="font-size: 3.5rem; margin-bottom: 0.5rem; animation: floatBob 3s infinite;">🌿🤖</div>
+          <h1 style="font-size: 2rem; font-weight: 900; margin-bottom: 1.25rem; background: linear-gradient(135deg, #a5b4fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Ölchen AI Quiz
+          </h1>
+
+          <form id="formJoin">
+            <div class="form-group">
+              <label for="inputPin">Spiel-PIN</label>
+              <input type="number" id="inputPin" class="form-input" placeholder="z.B. 4829" required pattern="[0-9]*" inputmode="numeric">
+            </div>
+
+            <div class="form-group">
+              <label for="inputNickname">Dein Name / Spitzname</label>
+              <input type="text" id="inputNickname" class="form-input" placeholder="z.B. Noah, Mia, Leo..." required maxlength="15">
+            </div>
+
+            <div class="form-group">
+              <label>Wähle dein Avatar-Emoji</label>
+              <div class="avatar-selector" id="avatarSelector">
+                <span class="avatar-option selected" data-emoji="🤖">🤖</span>
+                <span class="avatar-option" data-emoji="🌿">🌿</span>
+                <span class="avatar-option" data-emoji="🦊">🦊</span>
+                <span class="avatar-option" data-emoji="🚀">🚀</span>
+                <span class="avatar-option" data-emoji="⚡">⚡</span>
+                <span class="avatar-option" data-emoji="💧">💧</span>
+                <span class="avatar-option" data-emoji="🎨">🎨</span>
+                <span class="avatar-option" data-emoji="🔥">🔥</span>
+                <span class="avatar-option" data-emoji="👑">👑</span>
+                <span class="avatar-option" data-emoji="🦁">🦁</span>
+                <span class="avatar-option" data-emoji="🦄">🦄</span>
+                <span class="avatar-option" data-emoji="🥑">🥑</span>
+              </div>
+            </div>
+
+            <button type="submit" id="btnJoinSubmit" class="btn btn-large" style="width: 100%; margin-top: 0.5rem;">
+              Beitreten ➔
+            </button>
+          </form>
+
+          <div id="joinErrorMessage" style="color: #ef4444; font-weight: 700; margin-top: 1rem; display: none;"></div>
+        </div>
+      </div>
+
+      <!-- 2. LOBBY WAITING SCREEN -->
+      <div id="pScreenLobby" class="screen">
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; animation: popIn 0.4s ease;">
+          <div id="playerLobbyAvatar" style="font-size: 5.5rem; margin-bottom: 0.8rem; animation: floatBob 2.5s infinite;">🤖</div>
+          <h2 id="playerLobbyName" style="font-size: 2.2rem; font-weight: 900; margin-bottom: 0.4rem; color: #fff;">Hallo!</h2>
+          <div style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); padding: 0.6rem 1.6rem; border-radius: 999px; font-weight: 800; color: #a5b4fc; margin-bottom: 2rem;">
+            PIN: <span id="playerLobbyPin">----</span>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 1.5rem; max-width: 380px;">
+            <p style="font-size: 1.25rem; font-weight: 800; color: #38bdf8; margin-bottom: 0.4rem;">Du bist in der Lobby! ✨</p>
+            <p style="color: #94a3b8; font-size: 0.95rem;">Schau auf das Whiteboard – gleich geht das Quiz los!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. QUESTION ANSWER SCREEN -->
+      <div id="pScreenQuestion" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1rem; color: #a5b4fc;">
+            <span id="pPlayerAvatarSmall" style="font-size: 1.3rem;">🤖</span>
+            <span id="pPlayerNameSmall">Spieler</span>
+          </div>
+          <div style="font-weight: 900; font-size: 1.15rem; color: #38bdf8;">
+            Frage <span id="pCurrentQNum">1</span>
+          </div>
+        </div>
+
+        <div style="background: var(--bg-card); border-radius: 16px; padding: 0.9rem 1.1rem; margin-bottom: 0.5rem; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+          <div id="pQuestionTitle" style="font-size: 1.15rem; font-weight: 800; color: #fff; line-height: 1.3;">Lädt Frage...</div>
+        </div>
+
+        <!-- 4 Big Tap Buttons -->
+        <div class="player-game-grid" id="playerButtonsGrid">
+          <button class="player-button player-btn-0" data-opt="0">
+            <span class="btn-symbol">▲</span>
+            <span class="btn-text-preview" id="pBtnText0">A</span>
+          </button>
+          <button class="player-button player-btn-1" data-opt="1">
+            <span class="btn-symbol">◆</span>
+            <span class="btn-text-preview" id="pBtnText1">B</span>
+          </button>
+          <button class="player-button player-btn-2" data-opt="2">
+            <span class="btn-symbol">●</span>
+            <span class="btn-text-preview" id="pBtnText2">C</span>
+          </button>
+          <button class="player-button player-btn-3" data-opt="3">
+            <span class="btn-symbol">■</span>
+            <span class="btn-text-preview" id="pBtnText3">D</span>
+          </button>
+        </div>
+
+        <div id="pAnswerSubmittedHint" style="display: none; background: rgba(15, 23, 42, 0.9); border: 2px solid #6366f1; border-radius: 20px; padding: 1.5rem; text-align: center; margin-top: 0.8rem; animation: popIn 0.3s ease;">
+          <div style="font-size: 2.4rem; margin-bottom: 0.3rem;">⏳</div>
+          <div style="font-size: 1.25rem; font-weight: 900; color: #38bdf8;">Antwort übermittelt!</div>
+          <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 0.2rem;">Schau auf das Whiteboard für die Auflösung...</div>
+        </div>
+      </div>
+
+      <!-- 4. QUESTION RESULT FEEDBACK SCREEN -->
+      <div id="pScreenResult" class="screen">
+        <div id="pResultBox" class="player-feedback feedback-correct">
+          <div id="pFeedbackIcon" class="feedback-icon">🎉</div>
+          <h2 id="pFeedbackTitle" class="feedback-title">Richtig!</h2>
+          <div id="pFeedbackPoints" class="feedback-points">+1,250 Pkt</div>
+          <div id="pFeedbackStreak" class="feedback-streak">🔥 2er Streak!</div>
+          
+          <div style="margin-top: 2rem; background: rgba(0, 0, 0, 0.35); padding: 1rem 1.5rem; border-radius: 16px; width: 100%;">
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Dein aktueller Rang</div>
+            <div id="pFeedbackRank" style="font-size: 2.2rem; font-weight: 900; color: #fff;">Platz #1</div>
+            <div style="font-size: 1.15rem; color: #a7f3d0; font-weight: 800; margin-top: 0.3rem;">
+              Gesamt: <span id="pFeedbackTotalScore">0</span> Pkt
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. FINAL PODIUM / GAME OVER SCREEN -->
+      <div id="pScreenGameOver" class="screen">
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 1.5rem;">
+          <div style="font-size: 5.5rem; margin-bottom: 0.5rem; animation: floatBob 3s infinite;">🏆</div>
+          <h1 style="font-size: 2.4rem; font-weight: 900; background: linear-gradient(135deg, #f59e0b, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Quiz beendet!
+          </h1>
+          <div id="pFinalPlacementBadge" style="background: rgba(245, 158, 11, 0.2); border: 2px solid #f59e0b; padding: 0.9rem 2rem; border-radius: 999px; font-size: 1.45rem; font-weight: 900; color: #fde68a; margin: 1.5rem 0;">
+            Platz 1 🥇
+          </div>
+          <div style="font-size: 1.35rem; font-weight: 800; color: #38bdf8; margin-bottom: 2rem;">
+            Endstand: <span id="pFinalScore">0</span> Punkte
+          </div>
+          <a href="/play.html" class="btn btn-secondary">Noch eine Runde spielen</a>
+        </div>
+      </div>
+
+      <!-- Bottom Live Reaction Bar -->
+      <div id="pReactionToolbar" class="reaction-toolbar" style="display: none; margin-top: auto;">
+        <button class="btn-react" onclick="sendReaction('❤️')">❤️</button>
+        <button class="btn-react" onclick="sendReaction('🔥')">🔥</button>
+        <button class="btn-react" onclick="sendReaction('👏')">👏</button>
+        <button class="btn-react" onclick="sendReaction('🤯')">🤯</button>
+        <button class="btn-react" onclick="sendReaction('🌿')">🌿</button>
+        <button class="btn-react" onclick="sendReaction('🤖')">🤖</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const net = new QuizNetwork(false);
+    net.init();
+
+    let selectedAvatar = '🤖';
+    let myPlayerInfo = null;
+
+    const screens = {
+      join: document.getElementById('pScreenJoin'),
+      lobby: document.getElementById('pScreenLobby'),
+      question: document.getElementById('pScreenQuestion'),
+      result: document.getElementById('pScreenResult'),
+      gameOver: document.getElementById('pScreenGameOver')
+    };
+
+    function showScreen(name) {
+      Object.values(screens).forEach(s => s.classList.remove('active'));
+      if (screens[name]) screens[name].classList.add('active');
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const pinParam = urlParams.get('pin');
+    if (pinParam) {
+      document.getElementById('inputPin').value = pinParam;
+    }
+
+    const avatarOptions = document.querySelectorAll('.avatar-option');
+    avatarOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        avatarOptions.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selectedAvatar = opt.getAttribute('data-emoji');
+        window.soundFx.playPop();
+      });
+    });
+
+    document.getElementById('formJoin').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const pin = document.getElementById('inputPin').value.trim();
+      const nickname = document.getElementById('inputNickname').value.trim();
+
+      if (!pin || !nickname) return;
+
+      document.getElementById('joinErrorMessage').style.display = 'none';
+      window.soundFx.playPop();
+
+      net.joinRoom(pin, nickname, selectedAvatar);
+    });
+
+    net.on('player:error', ({ message }) => {
+      const errBox = document.getElementById('joinErrorMessage');
+      errBox.textContent = message;
+      errBox.style.display = 'block';
+      window.soundFx.playWrong();
+    });
+
+    net.on('player:joined', ({ pin, player }) => {
+      myPlayerInfo = player;
+      document.getElementById('playerLobbyAvatar').textContent = player.avatar;
+      document.getElementById('playerLobbyName').textContent = `Hallo, ${player.nickname}!`;
+      document.getElementById('playerLobbyPin').textContent = pin;
+      
+      document.getElementById('pPlayerAvatarSmall').textContent = player.avatar;
+      document.getElementById('pPlayerNameSmall').textContent = player.nickname;
+
+      document.getElementById('pReactionToolbar').style.display = 'flex';
+
+      showScreen('lobby');
+      window.soundFx.playCorrect();
+    });
+
+    window.sendReaction = (emoji) => {
+      net.sendReaction(emoji);
+      window.soundFx.playPop();
+    };
+
+    net.on('game:question_player', (data) => {
+      showScreen('question');
+      window.soundFx.playWhoosh();
+
+      document.getElementById('pCurrentQNum').textContent = `${data.questionIndex + 1} / ${data.totalQuestions}`;
+      document.getElementById('pQuestionTitle').textContent = data.question;
+
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`pBtnText${i}`).textContent = data.options[i] || '';
+      }
+
+      const buttons = document.querySelectorAll('.player-button');
+      buttons.forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      });
+      document.getElementById('pAnswerSubmittedHint').style.display = 'none';
+    });
+
+    const buttons = document.querySelectorAll('.player-button');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const optIndex = parseInt(btn.getAttribute('data-opt'), 10);
+        
+        buttons.forEach(b => {
+          b.disabled = true;
+          if (b !== btn) b.style.opacity = '0.35';
+        });
+
+        document.getElementById('pAnswerSubmittedHint').style.display = 'block';
+        window.soundFx.playPop();
+
+        net.submitAnswer(optIndex);
+      });
+    });
+
+    net.on('game:question_result_player', (data) => {
+      showScreen('result');
+      
+      const resultBox = document.getElementById('pResultBox');
+      const icon = document.getElementById('pFeedbackIcon');
+      const title = document.getElementById('pFeedbackTitle');
+      const points = document.getElementById('pFeedbackPoints');
+      const streak = document.getElementById('pFeedbackStreak');
+      const rank = document.getElementById('pFeedbackRank');
+      const totalScore = document.getElementById('pFeedbackTotalScore');
+
+      rank.textContent = `Platz #${data.rank}`;
+      totalScore.textContent = data.totalScore.toLocaleString();
+
+      if (data.isCorrect) {
+        resultBox.className = 'player-feedback feedback-correct';
+        icon.textContent = '🎉';
+        title.textContent = 'Richtig!';
+        points.textContent = `+${data.pointsEarned.toLocaleString()} Pkt`;
+        streak.textContent = data.streak > 1 ? `🔥 ${data.streak}er Streak!` : '🎯 Weiter so!';
+        streak.style.display = 'inline-block';
+        window.soundFx.playCorrect();
+      } else {
+        resultBox.className = 'player-feedback feedback-wrong';
+        icon.textContent = data.answered ? '❌' : '⌛';
+        title.textContent = data.answered ? 'Leider falsch!' : 'Zeit abgelaufen!';
+        points.textContent = '+0 Pkt';
+        streak.textContent = 'Streak zurückgesetzt';
+        streak.style.display = 'inline-block';
+        window.soundFx.playWrong();
+      }
+    });
+
+    net.on('game:game_over', ({ podium, allPlayers }) => {
+      showScreen('gameOver');
+      window.soundFx.playFanfare();
+      window.launchConfetti();
+
+      const myId = net.socket ? net.socket.id : (net.peer ? net.peer.id : null);
+      const myRank = allPlayers.findIndex(p => p.id === myId) + 1;
+      const myFinalScore = allPlayers.find(p => p.id === myId)?.score || 0;
+
+      const badge = document.getElementById('pFinalPlacementBadge');
+      if (myRank === 1) {
+        badge.textContent = '🏆 1. Platz! Grandios!';
+      } else if (myRank === 2) {
+        badge.textContent = '🥈 2. Platz! Stark gemacht!';
+      } else if (myRank === 3) {
+        badge.textContent = '🥉 3. Platz! Auf dem Treppchen!';
+      } else {
+        badge.textContent = `Platz ${myRank > 0 ? myRank : 1} von ${allPlayers.length} 🎉`;
+      }
+
+      document.getElementById('pFinalScore').textContent = myFinalScore.toLocaleString();
+    });
+
+    net.on('room:closed', ({ message }) => {
+      alert(message || 'Das Spiel wurde beendet.');
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
