@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: oelchen-quiz
+    runtime: node
+    plan: free
+    region: fra # Frankfurt (Europe - Switzerland closest)
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 3000

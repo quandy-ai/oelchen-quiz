@@ -1,0 +1,152 @@
+[
+  {
+    "id": 1,
+    "category": "🤖 KI & Web",
+    "question": "Was macht ein moderner KI-Website-Builder wie Lovable oder v0 hauptsächlich?",
+    "options": [
+      "Er druckt die Website auf Papier aus",
+      "Er generiert echten Programmcode (HTML/CSS/JS) direkt aus Text-Prompts",
+      "Er schaltet das Internet für die Schule aus",
+      "Er löscht alle Bilder auf dem Computer"
+    ],
+    "correct": 1,
+    "time": 20,
+    "isDoublePoints": false,
+    "explanation": "💡 KI-Website-Builder übersetzen menschliche Sprache (Prompts) in Sekunden direkt in fertigen, funktionsfähigen Web-Code!"
+  },
+  {
+    "id": 2,
+    "category": "💻 Coding Basics",
+    "question": "Aus welchen 3 Grundbausteinen besteht das Frontend einer modernen Website?",
+    "options": [
+      "HTML (Struktur), CSS (Design), JavaScript (Funktion)",
+      "Word, Excel und PowerPoint",
+      "USB-Kabel, HDMI und Bluetooth",
+      "TikTok, Instagram und Snapchat"
+    ],
+    "correct": 0,
+    "time": 20,
+    "isDoublePoints": false,
+    "explanation": "💡 HTML ist das Baugerüst, CSS sorgt für Farben & Styling, und JavaScript macht die Seite interaktiv!"
+  },
+  {
+    "id": 3,
+    "category": "✨ Prompting",
+    "question": "Was ist die wichtigste Regel für gute KI-Prompts beim Website-Bauen?",
+    "options": [
+      "Möglichst nur ein einziges Wort eingeben",
+      "Präzise beschreiben: Layout, Farbschema, Funktionen und Zielgruppe",
+      "Der KI mit schlechten Schulnoten drohen",
+      "Den Text immer rückwärts schreiben"
+    ],
+    "correct": 1,
+    "time": 20,
+    "isDoublePoints": false,
+    "explanation": "💡 Je strukturierter und detaillierter deine Instruktionen sind, desto passgenauer generiert die KI das Design."
+  },
+  {
+    "id": 4,
+    "category": "🌿 Ölchen AI",
+    "question": "Worum geht es auf der Website Ölchen AI (oelchen.lovable.app)?",
+    "options": [
+      "Um Motoröl für Rennautos",
+      "Um ätherische Öle, Wasserdampf-Destillation und Hydrolate",
+      "Um Olivenöl-Verkauf im Supermarkt",
+      "Um Frittierfett für Pommes"
+    ],
+    "correct": 1,
+    "time": 20,
+    "isDoublePoints": false,
+    "explanation": "💡 Ölchen AI erklärt die Welt der natürlichen Pflanzendestillation, Essenzen und bietet KI-Assistenten!"
+  },
+  {
+    "id": 5,
+    "category": "🔬 Destillation",
+    "question": "Was entsteht bei der Wasserdampf-Destillation neben dem ätherischen Öl?",
+    "options": [
+      "Hydrolat (aromatisches Pflanzenwasser)",
+      "Zuckerwatte",
+      "Flüssiger Kunststoff",
+      "Brausepulver"
+    ],
+    "correct": 0,
+    "time": 20,
+    "isDoublePoints": false,
+    "explanation": "💡 Hydrolat ist wertvolles Pflanzenwasser (z.B. Rosenwasser oder Pfefferminzwasser), das sich bei der Destillation vom Öl trennt."
+  },
+  {
+    "id": 6,
+    "category": "🚀 KI-Entwicklung",
+    "question": "Was macht man, wenn die KI auf der Website einen Fehler generiert?",
+    "options": [
+      "Den Computer sofort ins Wasser werfen",
+      "Den Fehler der KI präzise erklären und schrittweise beheben lassen (Iterieren)",
+      "Alles aufgeben und von vorne anfangen",
+      "Das iPad auf den Kopf stellen"
+    ],
+    "correct": 1,
+    "time": 20,
+    "isDoublePoints": false,
+    "explanation": "💡 KI-Entwicklung ist ein 'iterativer Dialog': Fehler analysieren, Feedback geben und schrittweise verfeinern!"
+  },
+  {
+    "id": 7,
+    "category": "🌍 Ölchen AI Features",
+    "question": "Welches besondere Feature bietet Ölchen AI für Besucher aus aller Welt?",
+    "options": [
+      "Automatische Pizza-Lieferung",
+      "Unterstützung für 64 Sprachen und einen KI-Chatbot & Bildgenerator",
+      "Kostenlose Flugtickets nach Paris",
+      "Einen Live-Ticker für Fussballspiele"
+    ],
+    "correct": 1,
+    "time": 20,
+    "isDoublePoints": false,
+    "explanation": "💡 Ölchen AI bietet 64 Sprachen (von Schwiizerdütsch bis Japanisch) und einen KI-Assistenten für Bild- und Textgenerierung!"
+  },
+  {
+    "id": 8,
+    "category": "🌐 Web & Hosting",
+    "question": "Was bedeutet der Begriff 'Deployment' bei der Website-Erstellung?",
+    "options": [
+      "Die Website auf einem Server im Internet veröffentlichen",
+      "Die Website im Papierkorb löschen",
+      "Den Bildschirm mit Glasreiniger putzen",
+      "Das iPad an die Steckdose hängen"
+    ],
+    "correct": 0,
+    "time": 20,
+    "isDoublePoints": false,
+    "explanation": "💡 Beim Deployment werden die Web-Dateien auf einen Server geladen, damit die Seite unter einer URL weltweit erreichbar ist!"
+  },
+  {
+    "id": 9,
+    "category": "⚡ Frontend vs Backend",
+    "question": "Was ist der Unterschied zwischen Frontend und Backend?",
+    "options": [
+      "Frontend ist die Vorderseite des iPads, Backend ist die Rückseite",
+      "Frontend sieht der Nutzer im Browser, Backend läuft auf dem Server (Datenbank, Logik)",
+      "Frontend ist immer kostenlos, Backend kostet 1 Million Franken",
+      "Es gibt überhaupt keinen Unterschied"
+    ],
+    "correct": 1,
+    "time": 20,
+    "isDoublePoints": false,
+    "explanation": "💡 Frontend ist das sichtbare User Interface, Backend verarbeitet Daten, Logik und Datenbanken auf dem Server!"
+  },
+  {
+    "id": 10,
+    "category": "🔥 FINALE (Doppelte Punkte!)",
+    "question": "Warum revolutioniert generative KI das Programmieren und Erstellen von Websites?",
+    "options": [
+      "Weil Computer dadurch keine Tastaturen mehr brauchen",
+      "Weil jeder Mensch Ideen in funktionierende Software umsetzen kann, ohne jahrelang Syntax zu lernen",
+      "Weil das Internet dadurch schneller wird als das Licht",
+      "Weil man dadurch keine Hausaufgaben mehr hat"
+    ],
+    "correct": 1,
+    "time": 25,
+    "isDoublePoints": true,
+    "explanation": "💡 KI senkt die Hürde: Kreativität, logisches Denken und gute Ideen stehen im Mittelpunkt – die KI hilft beim Umsetzen des Codes!"
+  }
+]
