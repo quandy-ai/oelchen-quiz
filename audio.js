@@ -184,6 +184,126 @@ class SoundEffects {
       });
     });
   }
+
+  // ==========================================================
+  // LOBBY GAMING MUSIC – Chiptune-Loop (A-Moll, 112 BPM)
+  // ==========================================================
+  startLobbyMusic() {
+    this.init();
+    if (!this.ctx || this.musicPlaying) return;
+    this.musicPlaying = true;
+
+    this.musicGain = this.ctx.createGain();
+    this.musicGain.gain.value = this.muted ? 0 : 0.14;
+    this.musicGain.connect(this.ctx.destination);
+
+    const bpm = 112;
+    this._stepDur = 60 / bpm / 2; // Achtelnoten
+    this._musicStep = 0;
+    this._nextNoteTime = this.ctx.currentTime + 0.1;
+    this._musicTimer = setInterval(() => this._scheduleMusic(), 60);
+  }
+
+  stopLobbyMusic() {
+    if (!this.musicPlaying) return;
+    this.musicPlaying = false;
+    clearInterval(this._musicTimer);
+    if (this.musicGain) {
+      try {
+        this.musicGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.4);
+        const g = this.musicGain;
+        setTimeout(() => { try { g.disconnect(); } catch (e) {} }, 600);
+      } catch (e) {}
+      this.musicGain = null;
+    }
+  }
+
+  setMusicVolume() {
+    if (this.musicGain) {
+      this.musicGain.gain.value = this.muted ? 0 : 0.14;
+    }
+  }
+
+  _scheduleMusic() {
+    if (!this.musicPlaying || !this.ctx) return;
+    while (this._nextNoteTime < this.ctx.currentTime + 0.25) {
+      this._playMusicStep(this._musicStep, this._nextNoteTime);
+      this._nextNoteTime += this._stepDur;
+      this._musicStep = (this._musicStep + 1) % 32;
+    }
+  }
+
+  _playMusicStep(step, t) {
+    const bar = Math.floor(step / 8); // 4 Takte: Am, F, C, G
+    const roots = [110.0, 87.31, 130.81, 98.0];            // A2, F2, C3, G2
+    const arps = [
+      [220.0, 261.63, 329.63, 440.0],   // Am: A3 C4 E4 A4
+      [174.61, 220.0, 261.63, 349.23],  // F:  F3 A3 C4 F4
+      [261.63, 329.63, 392.0, 523.25],  // C:  C4 E4 G4 C5
+      [196.0, 246.94, 293.66, 392.0]    // G:  G3 B3 D4 G4
+    ];
+
+    // 🎸 Pumpender Bass auf jeder Achtel
+    this._mTone(roots[bar], t, this._stepDur * 0.85, 'triangle', 0.5);
+
+    // 🎹 Arpeggio-Melodie (jede Achtel ein Ton, auf & ab)
+    const arp = arps[bar];
+    const seq = [0, 1, 2, 3, 2, 3, 2, 1];
+    this._mTone(arp[seq[step % 8]], t, this._stepDur * 0.7, 'square', 0.14);
+
+    // 🥁 Kick auf Schlag 1 & 3, Hi-Hat auf Off-Beats
+    if (step % 4 === 0) this._mKick(t);
+    if (step % 2 === 1) this._mHat(t);
+  }
+
+  _mTone(freq, t, dur, type, vol) {
+    if (!this.musicGain) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(vol, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(gain);
+    gain.connect(this.musicGain);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  }
+
+  _mKick(t) {
+    if (!this.musicGain) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(140, t);
+    osc.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+    gain.gain.setValueAtTime(0.7, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+    osc.connect(gain);
+    gain.connect(this.musicGain);
+    osc.start(t);
+    osc.stop(t + 0.16);
+  }
+
+  _mHat(t) {
+    if (!this.musicGain) return;
+    const len = 0.04;
+    const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * len, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 7500;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.12;
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.musicGain);
+    src.start(t);
+  }
 }
 
 window.soundFx = new SoundEffects();

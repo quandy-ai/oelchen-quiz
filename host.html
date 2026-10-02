@@ -26,6 +26,7 @@
         <span>Ölchen AI Quiz Master</span>
       </div>
       <div class="header-controls">
+        <button id="btnMusicToggle" class="btn-icon" title="Lobby-Musik ein/aus">🎵</button>
         <button id="btnSoundToggle" class="btn-icon" title="Ton ein/aus">🔊</button>
         <button id="btnFullscreen" class="btn-icon" title="Vollbild">⛶ Vollbild</button>
         <button id="btnManageQuestions" class="btn btn-secondary" style="font-size: 0.95rem; padding: 0.55rem 1.1rem;">⚙️ Fragen anpassen</button>
@@ -240,8 +241,37 @@
     document.getElementById('btnSoundToggle').addEventListener('click', () => {
       isMuted = !isMuted;
       window.soundFx.muted = isMuted;
+      window.soundFx.setMusicVolume();
+      epicSound.muted = isMuted;
       document.getElementById('btnSoundToggle').textContent = isMuted ? '🔇' : '🔊';
     });
+
+    // ===== 🎵 Lobby Gaming-Musik =====
+    let musicEnabled = true;
+    let inLobby = true;
+
+    function tryStartLobbyMusic() {
+      if (musicEnabled && inLobby) {
+        window.soundFx.startLobbyMusic();
+      }
+    }
+
+    document.getElementById('btnMusicToggle').addEventListener('click', () => {
+      musicEnabled = !musicEnabled;
+      document.getElementById('btnMusicToggle').textContent = musicEnabled ? '🎵' : '🎵🚫';
+      if (musicEnabled) { tryStartLobbyMusic(); } else { window.soundFx.stopLobbyMusic(); }
+    });
+
+    // Browser erlauben Audio erst nach der ersten Interaktion:
+    document.addEventListener('pointerdown', function autoMusic() {
+      tryStartLobbyMusic();
+      document.removeEventListener('pointerdown', autoMusic);
+    });
+    tryStartLobbyMusic();
+
+    // ===== 🎬 Epischer Finale-Sound =====
+    const epicSound = new Audio('podium-epic.mp3');
+    epicSound.preload = 'auto';
 
     document.getElementById('btnFullscreen').addEventListener('click', () => {
       if (!document.fullscreenElement) {
@@ -254,8 +284,17 @@
     async function init() {
       try {
         const res = await fetch('/api/questions');
+        if (!res.ok) throw new Error('no api');
         questionsData = await res.json();
       } catch (e) {
+        // Static hosting mode (e.g. GitHub Pages): load questions.json directly
+        try {
+          const res2 = await fetch('questions.json');
+          if (!res2.ok) throw new Error('no file');
+          questionsData = await res2.json();
+          net.createRoom(questionsData);
+          return;
+        } catch (e2) { /* fall through to built-in questions */ }
         questionsData = [
           { id: 1, category: "🤖 KI & Web", question: "Was macht ein KI-Website-Builder wie Lovable?", options: ["Druckt Papier", "Generiert HTML/CSS/JS aus Prompts", "Ersetzt Internet", "Schaltet PC aus"], correct: 1, time: 20 },
           { id: 2, category: "💻 Coding Basics", question: "Welche 3 Bausteine bilden jede Website?", options: ["HTML, CSS, JS", "Word, Excel, PPT", "USB, HDMI, Bluetooth", "TikTok, Insta, YT"], correct: 0, time: 20 },
@@ -270,8 +309,10 @@
       currentPin = pin;
       document.getElementById('displayPin').textContent = pin;
       
-      const playUrl = `${window.location.origin}/play.html?pin=${pin}`;
-      document.getElementById('displayHostUrl').textContent = `${window.location.host}/play.html`;
+      const playUrlObj = new URL('play.html', window.location.href);
+      playUrlObj.search = `?pin=${pin}`;
+      const playUrl = playUrlObj.toString();
+      document.getElementById('displayHostUrl').textContent = playUrl.replace(/^https?:\/\//, '').replace(/\?.*$/, '');
 
       const qrContainer = document.getElementById('qrCodeContainer');
       qrContainer.innerHTML = '';
@@ -328,6 +369,8 @@
 
     net.on('game:question_host', (data) => {
       showScreen('question');
+      inLobby = false;
+      window.soundFx.stopLobbyMusic();
       window.soundFx.playWhoosh();
 
       document.getElementById('questionCategory').textContent = data.category || 'KI & Web';
@@ -510,9 +553,26 @@
           document.getElementById('podium1Crown').style.display = 'block';
         }
         document.getElementById('podiumStatusText').textContent = `🏆 Herzlichen Glückwunsch an Champion ${p1 ? p1.nickname : ''}!`;
-        
-        window.soundFx.playFanfare();
+
+        // 🎬 EPISCHES FINALE: Kino-Sound + Konfetti-Salven + Gold-Effekte!
+        window.soundFx.stopLobbyMusic();
+        document.body.classList.add('epic-finale');
+        if (!isMuted) {
+          try {
+            epicSound.currentTime = 0;
+            epicSound.volume = 1.0;
+            epicSound.play().catch(() => window.soundFx.playFanfare());
+          } catch (e) {
+            window.soundFx.playFanfare();
+          }
+        }
         window.launchConfetti();
+        let confettiBursts = 0;
+        const confettiShow = setInterval(() => {
+          window.launchConfetti();
+          confettiBursts++;
+          if (confettiBursts >= 6) clearInterval(confettiShow);
+        }, 2600);
 
         btn.style.display = 'none';
         document.getElementById('btnConfettiAgain').style.display = 'inline-flex';

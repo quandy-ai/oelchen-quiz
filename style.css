@@ -1216,6 +1216,153 @@ header.app-header {
   margin-bottom: 1.2rem;
 }
 
+/* =========================================
+   🕹️ ARCADE-BUTTON-UPGRADE (Spieler & Host)
+   ========================================= */
+.player-button {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+}
+
+/* Glossy Glas-Highlight oben */
+.player-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.02));
+  border-radius: 30px 30px 50% 50%;
+  pointer-events: none;
+}
+
+/* Wandernder Glanz-Streifen */
+.player-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: shineSweep 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.player-button:nth-child(2)::after { animation-delay: 0.8s; }
+.player-button:nth-child(3)::after { animation-delay: 1.6s; }
+.player-button:nth-child(4)::after { animation-delay: 2.4s; }
+
+/* Symbol in leuchtendem Badge */
+.player-button .btn-symbol {
+  font-size: 4.2rem;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+  animation: floatBob 2.6s ease-in-out infinite;
+}
+
+.player-button:nth-child(2) .btn-symbol { animation-delay: 0.3s; }
+.player-button:nth-child(3) .btn-symbol { animation-delay: 0.6s; }
+.player-button:nth-child(4) .btn-symbol { animation-delay: 0.9s; }
+
+/* Farbiger Neon-Glow pro Button */
+.player-btn-0 { box-shadow: 0 10px 30px rgba(232, 49, 79, 0.55), inset 0 -6px 14px rgba(0, 0, 0, 0.25); }
+.player-btn-1 { box-shadow: 0 10px 30px rgba(26, 134, 232, 0.55), inset 0 -6px 14px rgba(0, 0, 0, 0.25); }
+.player-btn-2 { box-shadow: 0 10px 30px rgba(255, 166, 2, 0.55), inset 0 -6px 14px rgba(0, 0, 0, 0.25); }
+.player-btn-3 { box-shadow: 0 10px 30px rgba(47, 180, 44, 0.55), inset 0 -6px 14px rgba(0, 0, 0, 0.25); }
+
+.player-button:hover {
+  filter: brightness(1.12);
+  transform: translateY(-3px) scale(1.02);
+}
+
+/* Host-Antwortkarten: gleicher Glanz-Effekt */
+.option-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  animation: shineSweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.option-card:nth-child(2)::after { animation-delay: 1s; }
+.option-card:nth-child(3)::after { animation-delay: 2s; }
+.option-card:nth-child(4)::after { animation-delay: 3s; }
+
+/* =========================================
+   🎬 EPISCHES FINALE (Champion-Enthüllung)
+   ========================================= */
+@keyframes epicFlash {
+  0% { opacity: 1; background: rgba(255, 255, 255, 0.95); }
+  30% { opacity: 1; background: radial-gradient(circle at 50% 30%, rgba(255, 206, 0, 0.5), rgba(255, 255, 255, 0.1) 70%); }
+  100% { opacity: 1; background: radial-gradient(circle at 50% 30%, rgba(255, 206, 0, 0.18), transparent 65%); }
+}
+
+@keyframes epicRays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes epicZoom {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.045); }
+}
+
+body.epic-finale::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  animation: epicFlash 2.5s ease-out forwards;
+}
+
+/* Rotierende goldene Lichtstrahlen hinter dem Podium */
+body.epic-finale .podium-container {
+  position: relative;
+}
+
+body.epic-finale .podium-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1400px;
+  height: 1400px;
+  margin: -700px 0 0 -700px;
+  background: conic-gradient(
+    rgba(255, 206, 0, 0.12) 0deg, transparent 22deg,
+    rgba(255, 206, 0, 0.12) 45deg, transparent 67deg,
+    rgba(255, 206, 0, 0.12) 90deg, transparent 112deg,
+    rgba(255, 206, 0, 0.12) 135deg, transparent 157deg,
+    rgba(255, 206, 0, 0.12) 180deg, transparent 202deg,
+    rgba(255, 206, 0, 0.12) 225deg, transparent 247deg,
+    rgba(255, 206, 0, 0.12) 270deg, transparent 292deg,
+    rgba(255, 206, 0, 0.12) 315deg, transparent 337deg
+  );
+  animation: epicRays 14s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+body.epic-finale .podium-1 {
+  animation: epicZoom 2.2s ease-in-out infinite;
+}
+
+body.epic-finale .podium-1 .podium-pillar {
+  box-shadow: 0 0 60px rgba(255, 206, 0, 0.9), 0 0 120px rgba(255, 206, 0, 0.45);
+}
+
+body.epic-finale .podium-crown {
+  font-size: 4.2rem;
+  filter: drop-shadow(0 0 25px rgba(255, 206, 0, 1));
+}
+
 /* ======================= SCROLLBARS ======================= */
 ::-webkit-scrollbar {
   width: 10px;
